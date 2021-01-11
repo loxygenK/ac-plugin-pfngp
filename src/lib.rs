@@ -9,3 +9,16 @@ impl AutoclipPlugin for AutoclipPluginPfngp {
         Some(format!("{} ... OK", contents))
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_appends_footer() {
+        let plugin = AutoclipPluginPfngp {};
+        assert_eq!(plugin.on_clip("ABCDE").unwrap(), "ABCDE ... OK");
+        assert_eq!(plugin.on_clip("").unwrap(), " ... OK");
+    }
+}
