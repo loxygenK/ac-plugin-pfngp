@@ -1,4 +1,7 @@
+mod impls;
+
 use autoclip_core::{AutoclipPlugin, PluginRegistrar};
+use impls::encrypt;
 
 autoclip_core::export_plugin!("pfngp", AutoclipPluginPfngp);
 
@@ -6,10 +9,12 @@ pub struct AutoclipPluginPfngp;
 
 impl AutoclipPlugin for AutoclipPluginPfngp {
     fn on_clip(&self, contents: &str) -> Option<String> {
-        Some(format!("{} ... OK", contents))
+        if contents.find("/enc").is_some() {
+            return encrypt(contents);
+        }
+        None
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -18,7 +23,6 @@ mod tests {
     #[test]
     fn it_appends_footer() {
         let plugin = AutoclipPluginPfngp {};
-        assert_eq!(plugin.on_clip("ABCDE").unwrap(), "ABCDE ... OK");
-        assert_eq!(plugin.on_clip("").unwrap(), " ... OK");
+        println!("{:?}", plugin.on_clip("ABCDE/enc fli"));
     }
 }
