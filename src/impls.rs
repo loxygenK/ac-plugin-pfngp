@@ -6,24 +6,30 @@ fn find_key(ctx: &mut Context, query: &str) -> Result<Key, String> {
         .find_keys(vec![query])
         .map_err(|x| format!("Could not search keys ({:?})", x))?
         .next()
-        .ok_or("No key found for this query".to_string())?
+        .ok_or_else(|| "No key found for this query".to_string())?
         .map_err(|x| format!("Could not get keys ({:?})", x))?)
 }
 
 pub fn encrypt(raw_data: &str) -> Option<String> {
     // Get footer
-    let footer = &raw_data[raw_data.rfind('/').expect("Footer separator ('/')")..];
+    let separator_index = raw_data
+        .rfind('/')
+        .expect("Whoa, bug. Separator '/' expected but not found!");
+    let footer = &raw_data[separator_index..];
+    let encrypt_body = raw_data[..separator_index].to_string();
     let recipients = footer.split(' ').skip(1);
 
     // Get communicated with OpenGPG
-    let mut ctx = Context::from_protocol(Protocol::OpenPgp)
-        .map_err(|x| {
+    let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
+        Ok(c) => c,
+        Err(e) => {
             notify(
                 "Error",
-                &format!("Failed to communicate with Opengpg:\n{:?}", x),
-            )
-        })
-        .ok()?;
+                &format!("Failed to communicate with Opengpg:\n{:?}", e),
+            );
+            return Some(encrypt_body);
+        }
+    };
 
     // We need armored data
     ctx.set_armor(true);
@@ -34,6 +40,14 @@ pub fn encrypt(raw_data: &str) -> Option<String> {
         .filter(|x| x.is_ok()) // Get only succeeded ones...
         .map(|x| x.unwrap()) // Then unwrap it...
         .collect(); // And make them vector.
+
+    if target_keys.is_empty() {
+        notify(
+            "No appropriate key found",
+            "No appropriate key found for your query. Check typo!",
+        );
+        return Some(encrypt_body);
+    }
 
     // Getting texte of the user id of keys
     let target_uids: String = target_keys
@@ -55,7 +69,7 @@ pub fn encrypt(raw_data: &str) -> Option<String> {
 
     // Finally encrypting
     let mut output = Vec::new();
-    match ctx.encrypt(&target_keys, raw_data, &mut output) {
+    match ctx.encrypt(&target_keys, encrypt_body.clone(), &mut output) {
         Ok(_) => {
             // If succeeded, try to decrypt data (data maybe not plain-text)
             // TODO: Save non-plain text data to somewhere
@@ -75,7 +89,7 @@ pub fn encrypt(raw_data: &str) -> Option<String> {
                         "Encrypted (not text)",
                         "The data you copied just now was not text.",
                     );
-                    None
+                    Some(encrypt_body)
                 }
             }
         }
@@ -88,7 +102,7 @@ pub fn encrypt(raw_data: &str) -> Option<String> {
                     e
                 ),
             );
-            None
+            Some(encrypt_body)
         }
     }
 }
