@@ -33,3 +33,15 @@ pub fn encrypt(raw_data: &str) -> Option<String> {
         }
     }
 }
+
+pub fn decrypt(raw_data: &str) -> Option<String> {
+    let mut ctx = Context::from_protocol(Protocol::OpenPgp).ok()?;
+    let mut output = Vec::new();
+    match ctx.decrypt(raw_data.as_bytes(), &mut output) {
+        Ok(_) => Some(String::from_utf8(output).unwrap()),
+        Err(e) => {
+            println!("{:?}", e);
+            None
+        }
+    }
+}
