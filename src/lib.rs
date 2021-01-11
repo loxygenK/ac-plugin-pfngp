@@ -1,7 +1,8 @@
 mod impls;
+mod notify;
 
 use autoclip_core::{AutoclipPlugin, PluginRegistrar};
-use impls::{encrypt, decrypt};
+use impls::{decrypt, encrypt};
 
 autoclip_core::export_plugin!("pfngp", AutoclipPluginPfngp);
 
