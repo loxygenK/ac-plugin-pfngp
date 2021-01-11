@@ -11,3 +11,4 @@ crate-type = ["cdylib"]
 [dependencies]
 autoclip-core = "0.1.0"
 gpgme = "0.9.2"
+notify-rust = "4"
