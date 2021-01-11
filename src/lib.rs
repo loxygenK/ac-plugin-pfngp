@@ -21,14 +21,3 @@ impl AutoclipPlugin for AutoclipPluginPfngp {
         None
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_appends_footer() {
-        let plugin = AutoclipPluginPfngp {};
-        println!("{:?}", plugin.on_clip("ABCDE/enc fli"));
-    }
-}
