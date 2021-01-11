@@ -1,11 +1,21 @@
 use crate::notify::notify;
 use gpgme::{Context, Key, Protocol};
-use notify_rust::Notification;
+
+fn find_key(ctx: &mut Context, query: &str) -> Result<Key, String> {
+    Ok(ctx
+        .find_keys(vec![query])
+        .map_err(|x| format!("Could not search keys ({:?})", x))?
+        .next()
+        .ok_or("No key found for this query".to_string())?
+        .map_err(|x| format!("Could not get keys ({:?})", x))?)
+}
 
 pub fn encrypt(raw_data: &str) -> Option<String> {
+    // Get footer
     let footer = &raw_data[raw_data.rfind('/').expect("Footer separator ('/')")..];
     let recipients = footer.split(' ').skip(1);
 
+    // Get communicated with OpenGPG
     let mut ctx = Context::from_protocol(Protocol::OpenPgp)
         .map_err(|x| {
             notify(
@@ -15,21 +25,17 @@ pub fn encrypt(raw_data: &str) -> Option<String> {
         })
         .ok()?;
 
+    // We need armored data
     ctx.set_armor(true);
 
-    let mut target_keys: Vec<Key> = vec![];
-    for rec in recipients {
-        let keys = ctx.find_keys(vec![rec]);
-        if keys.is_err() {
-            continue;
-        }
-        let key = keys.unwrap().next();
-        if key.is_none() {
-            continue;
-        }
-        target_keys.append(&mut vec![key.unwrap().unwrap()]);
-    }
+    // Search appropriate keys the user are going to use
+    let target_keys: Vec<Key> = recipients
+        .map(|r| find_key(&mut ctx, r)) // Try to find key...
+        .filter(|x| x.is_ok()) // Get only succeeded ones...
+        .map(|x| x.unwrap()) // Then unwrap it...
+        .collect(); // And make them vector.
 
+    // Getting texte of the user id of keys
     let target_uids: String = target_keys
         .iter()
         .map(|x| {
@@ -47,19 +53,34 @@ pub fn encrypt(raw_data: &str) -> Option<String> {
         .collect::<Vec<String>>()
         .join("\n");
 
+    // Finally encrypting
     let mut output = Vec::new();
     match ctx.encrypt(&target_keys, raw_data, &mut output) {
         Ok(_) => {
-            notify(
-                "Encrypted",
-                &format!(
-                    "The data you copied just now has been encrypted for:\n{}",
-                    target_uids
-                ),
-            );
-            Some(String::from_utf8(output).unwrap())
+            // If succeeded, try to decrypt data (data maybe not plain-text)
+            // TODO: Save non-plain text data to somewhere
+            match String::from_utf8(output) {
+                Ok(d) => {
+                    notify(
+                        "Encrypted",
+                        &format!(
+                            "The data you copied just now has been encrypted for:\n{}",
+                            target_uids
+                        ),
+                    );
+                    Some(d)
+                }
+                Err(_) => {
+                    notify(
+                        "Encrypted (not text)",
+                        "The data you copied just now was not text.",
+                    );
+                    None
+                }
+            }
         }
         Err(e) => {
+            // If failed, tell user to the error and let autoclip NOT to modify clipboard
             notify(
                 "Failed to encrypt",
                 &format!(
