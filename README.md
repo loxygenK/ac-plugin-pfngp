@@ -11,6 +11,8 @@
 
 1. 暗号化したいテキストデータに続けて、`/enc 対象ユーザ1 対象ユーザ2 ...` というように、
    **`/enc` に続けて受取人の名前をスペース区切りで入力します**。
+   
+   受取人の名前は完全でなくても大丈夫です。部分的でOKです。
 
 2. `autoclip` を実行した状態でコピーします。
 
@@ -53,6 +55,7 @@ Ck4ftzMmEyCLnw7wKLBBpGNQCNL/mL2pytQLKCEYC94c5YQz9tI1FTzsnXx65tOb
 0l0BmqCMnbe0SgY5hVil4dIh95BOi2WPeYYX7KThiosQBKPr0VfdWFPfUA1aVEMV
 X/kx/WEsqyolXCetXESv/yS5ml1exF0Ars5GnPRTygH9q2qihz4VDCSyBpUy0rM=
 =+RBq
+EOF
 -----END PGP MESSAGE-----
 gpg: *警告*: コマンドが指定されていません。なにを意味しているのか当ててみます ...
 gpg: 256-ビットECDH鍵, ID D7CE63F383C4B204, 日付2020-06-03に暗号化されました
@@ -123,6 +126,7 @@ Ck4ftzMmEyCLnw7wKLBBpGNQCNL/mL2pytQLKCEYC94c5YQz9tI1FTzsnXx65tOb
 0l0BmqCMnbe0SgY5hVil4dIh95BOi2WPeYYX7KThiosQBKPr0VfdWFPfUA1aVEMV
 X/kx/WEsqyolXCetXESv/yS5ml1exF0Ars5GnPRTygH9q2qihz4VDCSyBpUy0rM=
 =+RBq
+EOF
 -----END PGP MESSAGE-----
 gpg: WARNING: no command supplied.  Trying to guess what you mean ...
 gpg: encrypted with 256-bit ECDH key, ID D7CE63F383C4B204, created 2020-06-03
